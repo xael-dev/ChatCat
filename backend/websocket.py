@@ -1,0 +1,17 @@
+from fastapi import FastAPI, Websocket
+from fastapi.responses import HTMLResponse
+from ../frontend/ import 'index.html' as html
+
+app = FastAPI()
+
+@app.get("/")
+async def get():
+    return HTMLResponse(html)
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: Websocket):
+    await websocket.accept()
+    while True:
+        data = await websocket.receive_text()
+        await websocket.send_text(f"Message text was: {data}")
+
