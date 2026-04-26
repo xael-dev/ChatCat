@@ -1,6 +1,6 @@
 import { appConfig } from "./config";
 
-export async function fetchChatBootstrap() {
+export async function fetchInitialChatSession() {
   try {
     const response = await fetch(`${appConfig.apiBaseUrl}/api/chat/bootstrap`, {
       headers: {
