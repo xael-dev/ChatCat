@@ -3,7 +3,7 @@ import { Composer } from "./components/Composer";
 import { ConnectionBadge } from "./components/ConnectionBadge";
 import { MessageList } from "./components/MessageList";
 import { Sidebar } from "./components/Sidebar";
-import { fetchChatBootstrap } from "./lib/api";
+import { fetchInitialChatSession } from "./lib/api";
 import { useChatSocket } from "./lib/chatSocket";
 import { appConfig } from "./lib/config";
 
@@ -20,7 +20,7 @@ function createOutgoingMessage({ text, roomId, currentUser }) {
 }
 
 export default function App() {
-  const [bootstrap, setBootstrap] = useState({
+  const [chatSession, setChatSession] = useState({
     currentUser: { id: "local-user", name: "You", status: "online" },
     rooms: [],
     messages: [],
@@ -30,12 +30,12 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
 
-    fetchChatBootstrap().then((payload) => {
+    fetchInitialChatData().then((payload) => {
       if (cancelled) {
         return;
       }
 
-      setBootstrap(payload);
+      setChatSession(payload);
 
       if (payload.rooms.length > 0) {
         setActiveRoomId(payload.rooms[0].id);
@@ -48,21 +48,21 @@ export default function App() {
   }, []);
 
   const activeRoom = useMemo(
-    () => bootstrap.rooms.find((room) => room.id === activeRoomId) || bootstrap.rooms[0],
-    [activeRoomId, bootstrap.rooms],
+    () => chatSession.rooms.find((room) => room.id === activeRoomId) || chatSession.rooms[0],
+    [activeRoomId, chatSession.rooms],
   );
 
   const visibleMessages = useMemo(
-    () => bootstrap.messages.filter((message) => message.roomId === activeRoom?.id),
-    [activeRoom?.id, bootstrap.messages],
+    () => chatSession.messages.filter((message) => message.roomId === activeRoom?.id),
+    [activeRoom?.id, chatSession.messages],
   );
 
   const { status, sendMessage } = useChatSocket({
     roomId: activeRoom?.id,
     url: appConfig.wsUrl.replace(/\/[^/]+$/, ""),
-    currentUser: bootstrap.currentUser,
+    currentUser: chatSession.currentUser,
     onMessage: (incoming) => {
-      setBootstrap((current) => {
+      setChatSession((current) => {
         const messages = current.messages.filter(
           (message) => !message.pending || message.text !== incoming.text,
         );
@@ -89,10 +89,10 @@ export default function App() {
     const optimisticMessage = createOutgoingMessage({
       text,
       roomId: activeRoom.id,
-      currentUser: bootstrap.currentUser,
+      currentUser: chatSession.currentUser,
     });
 
-    setBootstrap((current) => ({
+    setChatSession((current) => ({
       ...current,
       messages: [...current.messages, optimisticMessage],
     }));
@@ -104,7 +104,7 @@ export default function App() {
 
     if (!delivered) {
       window.setTimeout(() => {
-        setBootstrap((current) => ({
+        setChatSession((current) => ({
           ...current,
           messages: current.messages.map((message) =>
             message.id === optimisticMessage.id
@@ -122,9 +122,9 @@ export default function App() {
       <div className="ambient ambient-right" aria-hidden="true" />
 
       <Sidebar
-        rooms={bootstrap.rooms}
+        rooms={chatSession.rooms}
         activeRoomId={activeRoom?.id}
-        currentUser={bootstrap.currentUser}
+        currentUser={chatSession.currentUser}
         onSelectRoom={setActiveRoomId}
       />
 
@@ -147,7 +147,7 @@ export default function App() {
         <section className="chat-stage">
           <MessageList
             messages={visibleMessages}
-            currentUserId={bootstrap.currentUser.id}
+            currentUserId={chatSession.currentUser.id}
           />
         </section>
 
