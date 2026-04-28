@@ -1,6 +1,5 @@
 from fastapi import FastAPI, Websocket
 from fastapi.responses import HTMLResponse
-from ../frontend/ import 'index.html' as html
 
 app = FastAPI()
 
