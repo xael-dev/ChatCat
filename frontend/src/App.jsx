@@ -30,7 +30,7 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
 
-    fetchInitialChatData().then((payload) => {
+    fetchInitialChatSession().then((payload) => {
       if (cancelled) {
         return;
       }
@@ -59,7 +59,7 @@ export default function App() {
 
   const { status, sendMessage } = useChatSocket({
     roomId: activeRoom?.id,
-    url: appConfig.wsUrl.replace(/\/[^/]+$/, ""),
+    url: ,
     currentUser: chatSession.currentUser,
     onMessage: (incoming) => {
       setChatSession((current) => {
